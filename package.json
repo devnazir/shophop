@@ -1,0 +1,32 @@
+{
+  "name": "shophop",
+  "version": "0.5.0",
+  "description": "MCP server for Claude Code: work with several Shopify stores at once via the Shopify CLI's stored store auth",
+  "type": "module",
+  "bin": {
+    "shophop": "bin/shophop.js"
+  },
+  "scripts": {
+    "start": "node bin/shophop.js",
+    "ui": "node bin/shophop.js ui",
+    "test": "node --test test/*.test.js",
+    "build": "esbuild bin/shophop.js --bundle --platform=node --format=esm --target=node20 --outfile=dist/shophop.js --banner:js=\"import { createRequire } from \\\"node:module\\\"; const require = createRequire(import.meta.url);\" && cp src/shop-manager/page.html dist/page.html",
+    "bench": "node scripts/bench.js",
+    "pack:desktop": "npm run build && node scripts/pack-desktop.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devnazir/shophop.git"
+  }
+}

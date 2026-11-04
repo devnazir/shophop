@@ -1,0 +1,116 @@
+{
+  "manifest_version": "0.3",
+  "name": "shophop",
+  "display_name": "shophop",
+  "version": "0.4.0",
+  "description": "Several Shopify stores at once from Claude: read-only by default, audit log, B2B company copy with production approvals.",
+  "long_description": "shophop lets Claude work with several Shopify stores at the same time. Every tool names its store, so there is no shared active shop. Sign-in uses the Shopify CLI with your staff account, so no custom app is needed. Stores are read-only until you allow edits in the Shop Manager; deletes need separate access, copies into production need your approval, and every change is logged. Requires the Shopify CLI 4.9 or later on this computer.",
+  "author": {
+    "name": "devnazir",
+    "url": "https://github.com/devnazir"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devnazir/shophop"
+  },
+  "homepage": "https://github.com/devnazir/shophop",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/shophop.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/shophop.js"
+      ],
+      "env": {
+        "SHOPHOP_DATA_DIR": "${user_config.data_dir}",
+        "SHOPIFY_BIN": "${user_config.shopify_cli}",
+        "SHOPHOP_API_VERSION": "${user_config.api_version}",
+        "SHOPHOP_DEFAULT_DATA_DIR": "${HOME}/shophop-data"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "list_shops",
+      "description": "List stores, what Claude may do on each, and the Shopify CLI version"
+    },
+    {
+      "name": "open_shop_manager",
+      "description": "Open the Shop Manager to add stores, sign in, set access and approve production copies"
+    },
+    {
+      "name": "shop_query",
+      "description": "Read-only Admin GraphQL query on one store"
+    },
+    {
+      "name": "shop_schema",
+      "description": "Look up a store's Admin API schema"
+    },
+    {
+      "name": "shop_mutation",
+      "description": "Run a mutation on one store, if the store allows it"
+    },
+    {
+      "name": "shop_audit",
+      "description": "Read the change log"
+    },
+    {
+      "name": "shop_bulk_export",
+      "description": "Start a bulk export to a local file"
+    },
+    {
+      "name": "shop_bulk_status",
+      "description": "Check and download a bulk export"
+    },
+    {
+      "name": "shop_copy_companies",
+      "description": "Copy B2B companies between stores: dry run, approval, apply"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "shops",
+      "description": "Open the Shop Manager",
+      "text": "Open the shophop Shop Manager (open_shop_manager) and wait. When I say I'm done, call list_shops and summarize the stores."
+    }
+  ],
+  "user_config": {
+    "data_dir": {
+      "type": "string",
+      "title": "Export folder (optional)",
+      "description": "Folder where bulk exports, copy plans and ID maps are saved, e.g. /Users/you/shophop-data. Leave empty to use ~/shophop-data.",
+      "required": false
+    },
+    "shopify_cli": {
+      "type": "string",
+      "title": "Shopify CLI path (optional)",
+      "description": "Leave empty: shophop finds the `shopify` command by itself. Only if it says it cannot, run `which shopify` in Terminal and paste the path here.",
+      "required": false
+    },
+    "api_version": {
+      "type": "string",
+      "title": "Admin API version (optional)",
+      "description": "Pin a version like 2026-10 to save about half a second per call. Leave empty for the latest stable.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  },
+  "keywords": [
+    "shopify",
+    "multi-store",
+    "b2b",
+    "ecommerce"
+  ],
+  "license": "MIT"
+}

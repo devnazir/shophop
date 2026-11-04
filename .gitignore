@@ -1,0 +1,7 @@
+node_modules/
+shopify-data/
+.playwright-mcp/
+*.tmp
+.DS_Store
+video/
+release/

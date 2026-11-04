@@ -1,0 +1,14 @@
+{
+  "name": "shophop",
+  "owner": {
+    "name": "devnazir"
+  },
+  "description": "shophop: safe multi-store Shopify for Claude Code",
+  "plugins": [
+    {
+      "name": "shophop",
+      "source": "./",
+      "description": "Several Shopify stores at once in Claude Code, read-only by default, with audit log and production approvals."
+    }
+  ]
+}

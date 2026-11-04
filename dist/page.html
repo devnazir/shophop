@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop Manager</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #f5f5f2; --panel: #ffffff; --sunken: #f0efea; --text: #1c1c1a; --muted: #6b6b65; --line: #e3e2dc;
+    --accent: #1f6f4a; --accent-hover: #185a3c; --accent-text: #ffffff; --accent-soft: #e6f2ec;
+    --warn: #9a4a00; --warn-bg: #fff1e2; --danger: #b3261e; --danger-bg: #fdecea; --ok: #1f6f4a;
+    --focus: #2f6fdf; --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 8px 24px rgb(0 0 0 / .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131312; --panel: #1c1c1a; --sunken: #232321; --text: #ececea; --muted: #9c9c95; --line: #2f2f2c;
+      --accent: #4fb784; --accent-hover: #63c795; --accent-text: #0c1a12; --accent-soft: #1b2e24;
+      --warn: #f0a560; --warn-bg: #2d2116; --danger: #f2817a; --danger-bg: #351b19; --ok: #4fb784;
+      --focus: #7aa7ff; --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 16px 80px; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+
+  header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  header.top h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -.01em; }
+  header.top p { margin: 0; color: var(--muted); max-width: 560px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 7px 14px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.danger { color: var(--danger); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover { background: var(--sunken); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.sm { padding: 4px 10px; font-size: 13px; }
+
+  section { margin-bottom: 28px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .section-head h2 { font-size: 15px; margin: 0; }
+
+  .approval { background: var(--panel); border: 1px solid var(--danger); border-left-width: 4px; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .approval.decided { border-color: var(--line); border-left-color: var(--line); box-shadow: none; opacity: .85; }
+  .approval h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .approval .facts { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .approval .warns { font-size: 13px; color: var(--warn); margin: 0 0 10px; padding-left: 18px; }
+  .approval .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .approval input { flex: 1; min-width: 220px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .card.prod { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+  .card h3 { margin: 0; font-size: 15.5px; word-break: break-all; }
+  .card .domain { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; background: var(--sunken); color: var(--muted); }
+  .pill.prod { background: var(--danger-bg); color: var(--danger); }
+  .pill.dev { background: var(--accent-soft); color: var(--ok); }
+  .pill.edit { background: var(--warn-bg); color: var(--warn); }
+  .pill.delete { background: var(--danger-bg); color: var(--danger); }
+  .pill.off { background: var(--warn-bg); color: var(--warn); }
+  .card .meta { font-size: 12.5px; color: var(--muted); }
+  .card details summary { cursor: pointer; font-size: 12.5px; color: var(--muted); }
+  .card details .scopes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .chip { background: var(--sunken); border-radius: 6px; padding: 1px 6px; }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
+  .empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; padding: 28px; text-align: center; color: var(--muted); }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  select, input[type=text] { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  input[type=text]:focus, select:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent); }
+  input[readonly] { background: var(--sunken); color: var(--muted); }
+  .activity { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .act { border-top: 1px solid var(--line); }
+  .act:first-child { border-top: 0; }
+  .act summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 14px; }
+  .act summary::-webkit-details-marker { display: none; }
+  .act summary:hover { background: var(--sunken); }
+  .act .what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .act .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .dot.sent { background: var(--ok); } .dot.userErrors { background: var(--warn); } .dot.failed { background: var(--danger); } .dot.refused { background: var(--muted); }
+  .act .body { padding: 0 14px 14px 33px; }
+  .act .err { color: var(--danger); margin: 0 0 8px; }
+  pre.code { background: var(--sunken); border-radius: 8px; padding: 10px; margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, Menlo, monospace; max-height: 260px; overflow: auto; }
+
+  .backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / .35); display: flex; justify-content: flex-end; z-index: 20; }
+  .backdrop[hidden] { display: none; }
+  .drawer { background: var(--bg); width: min(560px, 100%); height: 100%; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .drawer-head h2 { margin: 0; font-size: 16px; }
+  .drawer-body { flex: 1; overflow: auto; padding: 18px 20px 24px; }
+  .drawer-body[hidden], .drawer-foot[hidden] { display: none; }
+  .drawer-foot { border-top: 1px solid var(--line); background: var(--panel); padding: 12px 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .drawer-foot .hint { flex: 1; min-width: 160px; font-size: 12.5px; color: var(--muted); }
+  .field { margin-bottom: 18px; }
+  .field > label, .legend { display: block; font-weight: 600; margin-bottom: 6px; }
+  .field .help { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
+  .field input[type=text] { width: 100%; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .two, .choices.cols2 { grid-template-columns: 1fr; } }
+  .choices { display: grid; gap: 8px; }
+  .choices.cols2 { grid-template-columns: 1fr 1fr; }
+  .choice { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+  .choice:hover { border-color: var(--muted); }
+  .choice input { margin-top: 3px; accent-color: var(--accent); }
+  .choice b { display: block; font-size: 13.5px; }
+  .choice span { font-size: 12.5px; color: var(--muted); }
+  .choice:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .choice.risky:has(input:checked) { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+  .callout { border-radius: 8px; padding: 9px 12px; font-size: 13px; margin-top: 8px; }
+  .callout.warn { background: var(--warn-bg); color: var(--warn); }
+  .callout.danger { background: var(--danger-bg); color: var(--danger); }
+  .callout.ok { background: var(--accent-soft); color: var(--ok); }
+  table.areas { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table.areas th, table.areas td { padding: 7px 12px; text-align: left; border-top: 1px solid var(--line); font-size: 13.5px; }
+  table.areas thead th { border-top: 0; font-size: 12px; color: var(--muted); font-weight: 600; background: var(--sunken); }
+  table.areas td.c, table.areas th.c { text-align: center; width: 64px; }
+  table.areas input { accent-color: var(--accent); width: 16px; height: 16px; }
+  details.adv summary { cursor: pointer; font-weight: 600; }
+  .scope-preview { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+
+  .steps { list-style: none; padding: 0; margin: 4px 0 16px; }
+  .steps li { display: flex; gap: 10px; align-items: center; padding: 8px 0; color: var(--muted); }
+  .steps li.active { color: var(--text); font-weight: 600; }
+  .steps li.done { color: var(--ok); }
+  .steps li.fail { color: var(--danger); font-weight: 600; }
+  .step-icon { width: 20px; height: 20px; border-radius: 50%; border: 2px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; flex: none; }
+  .steps li.active .step-icon { border-color: var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .steps li.active .step-icon { animation: none; border-color: var(--accent); } }
+
+  .modal { position: fixed; inset: 0; background: rgb(0 0 0 / .45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 40; }
+  .modal[hidden] { display: none; }
+  .modal-box { background: var(--panel); border-radius: 12px; width: min(440px, 100%); padding: 20px; box-shadow: var(--shadow); }
+  .modal-box h3 { margin: 0 0 8px; font-size: 16px; }
+  .modal-box p { margin: 0 0 12px; color: var(--muted); }
+  .modal-box input { width: 100%; margin-bottom: 14px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  #toasts { position: fixed; bottom: 16px; right: 16px; left: 16px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 50; pointer-events: none; }
+  .toast { pointer-events: auto; background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 14px; max-width: 420px; box-shadow: var(--shadow); font-size: 13.5px; }
+  .toast.err { background: var(--danger); color: #fff; }
+
+  footer.foot { color: var(--muted); font-size: 12px; line-height: 1.8; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Shop Manager</h1>
+      <p>Stores Claude Code can use through shophop. You sign in with your Shopify staff account. No custom app is needed.</p>
+    </div>
+    <button class="btn primary" id="add-store">+ Add store</button>
+  </header>
+
+  <section id="approvals-section" hidden>
+    <div class="section-head"><h2>Waiting for your approval</h2></div>
+    <div id="approvals"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Stores</h2><span class="muted small" id="store-count"></span></div>
+    <div id="stores" class="cards"><div class="empty">Loading…</div></div>
+    <p class="small muted" id="removed" hidden style="margin:10px 2px 0"></p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Activity</h2>
+      <div class="filters">
+        <select id="f-shop" aria-label="Filter by store"><option value="">All stores</option></select>
+        <select id="f-outcome" aria-label="Filter by result">
+          <option value="">All results</option>
+          <option value="sent">Applied</option>
+          <option value="userErrors">Rejected by Shopify</option>
+          <option value="failed">Failed</option>
+          <option value="refused">Blocked</option>
+        </select>
+        <button class="btn sm" id="refresh-activity">Refresh</button>
+      </div>
+    </div>
+    <div id="activity" class="activity"><div class="empty" style="border:0">Loading…</div></div>
+  </section>
+
+  <footer class="foot">Config: <span class="mono" id="cfg"></span><br>Audit log: <span class="mono" id="auditfile"></span></footer>
+</div>
+
+<div class="backdrop" id="drawer" hidden>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer-head">
+      <h2 id="drawer-title">Add store</h2>
+      <button class="btn ghost" id="drawer-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="drawer-body" id="form-view">
+      <div class="two">
+        <div class="field">
+          <label for="f-domain">Store domain</label>
+          <input type="text" id="f-domain" placeholder="my-store.myshopify.com" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-alias">Short name</label>
+          <input type="text" id="f-alias" placeholder="client-a" autocomplete="off" spellcheck="false">
+          <p class="help">What you'll call it when talking to Claude.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="legend">Environment</span>
+        <div class="choices cols2">
+          <label class="choice"><input type="radio" name="env" value="dev" checked><div><b>Development / staging</b><span>Safe to experiment on.</span></div></label>
+          <label class="choice risky"><input type="radio" name="env" value="prod"><div><b>Production</b><span>Live store. Red badge, a banner on Claude's replies, and copies into it need your approval.</span></div></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="legend">What Claude can do</span>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="access" value="read" checked><div><b>Read only</b><span>Look up and export data. Every write is refused.</span></div></label>
+          <label class="choice"><input type="radio" name="access" value="edit"><div><b>Read &amp; edit</b><span>Create and update. Deletes, cancellations, refunds, unpublishing, archiving and bulk changes are still refused.</span></div></label>
+          <label class="choice risky"><input type="radio" name="access" value="delete"><div><b>Read, edit &amp; delete</b><span>Everything, including deletes, refunds and bulk changes.</span></div></label>
+        </div>
+        <div id="access-warning"></div>
+      </div>
+
+      <div class="field">
+        <span class="legend">Data Claude can use</span>
+        <table class="areas">
+          <thead><tr><th>Area</th><th class="c">Read</th><th class="c edit-col">Edit</th></tr></thead>
+          <tbody id="areas"></tbody>
+        </table>
+        <p class="help" id="areas-help"></p>
+      </div>
+
+      <details class="adv">
+        <summary>Advanced</summary>
+        <div class="field" style="margin-top:10px">
+          <label for="f-extra">Extra scopes</label>
+          <input type="text" id="f-extra" placeholder="read_markets, write_translations" spellcheck="false">
+          <p class="help">Comma-separated Shopify scopes not covered above.</p>
+        </div>
+        <div class="small muted">Scopes that will be requested:</div>
+        <div class="scope-preview" id="scope-preview"></div>
+      </details>
+    </div>
+
+    <div class="drawer-body" id="progress-view" hidden>
+      <ol class="steps" id="steps">
+        <li data-step="start"><span class="step-icon"></span>Start Shopify sign-in</li>
+        <li data-step="browser"><span class="step-icon"></span>Approve access in the browser tab that opens</li>
+        <li data-step="save"><span class="step-icon"></span>Save settings</li>
+      </ol>
+      <div id="progress-msg"></div>
+      <div id="progress-link"></div>
+      <details style="margin-top:14px"><summary class="small muted" style="cursor:pointer">Details</summary><pre class="code" id="log" style="margin-top:8px"></pre></details>
+    </div>
+
+    <div class="drawer-foot" id="form-foot">
+      <button class="btn danger ghost" id="remove-store" hidden>Remove</button>
+      <span class="hint" id="foot-hint"></span>
+      <button class="btn" id="cancel">Cancel</button>
+      <button class="btn primary" id="submit">Sign in with Shopify</button>
+    </div>
+    <div class="drawer-foot" id="progress-foot" hidden>
+      <span class="hint"></span>
+      <button class="btn" id="stop-signin">Cancel sign-in</button>
+      <button class="btn primary" id="progress-done" hidden>Done</button>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title"></h3>
+    <p id="modal-text"></p>
+    <input type="text" id="modal-input" hidden autocomplete="off" spellcheck="false">
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Cancel</button>
+      <button class="btn primary" id="modal-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+const TOKEN = "__TOKEN__";
+const AREAS = [
+  ["products", "Products & collections"], ["inventory", "Inventory"], ["customers", "Customers"],
+  ["orders", "Orders"], ["discounts", "Discounts"], ["locations", "Locations"], ["markets", "Markets"],
+  ["content", "Online store content"], ["themes", "Themes"], ["metaobjects", "Metaobjects"],
+  ["publications", "Sales channels"], ["files", "Files"],
+];
+const DEFAULT_READ = ["products", "customers"];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const api = (path, opts = {}) => fetch(path, { ...opts, headers: { "x-token": TOKEN, "content-type": "application/json" } })
+  .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.statusText); return j; });
+const ago = (iso) => { const s = (Date.now() - Date.parse(iso)) / 1000; return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
+const normStore = (v) => { v = v.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return v && !v.endsWith(".myshopify.com") ? `${v}.myshopify.com` : v; };
+
+function toast(msg, err = false) {
+  const t = document.createElement("div");
+  t.className = `toast${err ? " err" : ""}`; t.textContent = msg;
+  $("toasts").appendChild(t);
+  setTimeout(() => t.remove(), err ? 7000 : 4000);
+}
+
+// In-page confirmation (replaces confirm/alert). typeToConfirm makes the user type that exact text.
+function ask({ title, text, ok = "Confirm", danger = false, typeToConfirm }) {
+  return new Promise((resolve) => {
+    $("modal-title").textContent = title; $("modal-text").textContent = text;
+    const input = $("modal-input");
+    input.hidden = !typeToConfirm; input.value = ""; input.placeholder = typeToConfirm ? `Type ${typeToConfirm}` : "";
+    const okBtn = $("modal-ok"); okBtn.textContent = ok; okBtn.className = `btn ${danger ? "danger" : "primary"}`;
+    okBtn.disabled = !!typeToConfirm;
+    input.oninput = () => { okBtn.disabled = input.value.trim().toLowerCase() !== typeToConfirm; };
+    const done = (v) => { $("modal").hidden = true; document.removeEventListener("keydown", onKey, true); resolve(v); };
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); done(false); } if (e.key === "Enter" && !okBtn.disabled) done(true); };
+    okBtn.onclick = () => done(true); $("modal-cancel").onclick = () => done(false);
+    document.addEventListener("keydown", onKey, true);
+    $("modal").hidden = false; (typeToConfirm ? input : okBtn).focus();
+  });
+}
+
+// ---------- stores ----------
+let shops = [];
+const accessOf = (s) => (s.allowDestructive ? "delete" : s.writable ? "edit" : "read");
+const ACCESS_LABEL = { read: ["Read only", ""], edit: ["Can edit", "edit"], delete: ["Can edit & delete", "delete"] };
+
+async function loadShops() {
+  const data = await api("/api/shops");
+  shops = data.shops;
+  $("cfg").textContent = data.configFile;
+  $("store-count").textContent = shops.length ? `${shops.length} store${shops.length > 1 ? "s" : ""}` : "";
+  const el = $("stores");
+  if (!shops.length) {
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><p style="margin:0 0 10px">No stores yet.</p><button class="btn primary sm" data-add>Add your first store</button></div>`;
+  } else {
+    el.innerHTML = shops.map((s, i) => {
+      const [label, cls] = ACCESS_LABEL[accessOf(s)];
+      return `<article class="card${s.production ? " prod" : ""}">
+        <div><h3>${esc(s.alias)}</h3><div class="domain">${esc(s.store)}</div></div>
+        <div class="pills">
+          ${s.production ? `<span class="pill prod">● Production</span>` : `<span class="pill dev">Development</span>`}
+          <span class="pill ${cls}">${label}</span>
+          ${s.authed ? "" : `<span class="pill off">Not signed in</span>`}
+        </div>
+        <div class="meta">${s.authed ? `Signed in as ${esc(s.user || "unknown")}` : "Sign in to use this store."}</div>
+        ${s.scopes?.length ? `<details><summary>${s.scopes.length} scope${s.scopes.length > 1 ? "s" : ""}</summary><div class="scopes">${s.scopes.map((x) => `<span class="chip mono">${esc(x)}</span>`).join("")}</div></details>` : ""}
+        <div class="card-actions">
+          <button class="btn sm${s.authed ? "" : " primary"}" data-edit="${i}">${s.authed ? "Settings" : "Sign in"}</button>
+        </div>
+      </article>`;
+    }).join("");
+  }
+  const removed = data.removed || [];
+  $("removed").hidden = !removed.length;
+  $("removed").innerHTML = removed.length ? `Removed: ${removed.map((st) => `${esc(st)} <button class="btn ghost sm" data-restore="${esc(st)}">Restore</button>`).join(" · ")}` : "";
+  const sel = $("f-shop"), cur = sel.value;
+  sel.innerHTML = `<option value="">All stores</option>` + shops.map((s) => `<option value="${esc(s.alias)}">${esc(s.alias)}</option>`).join("");
+  sel.value = cur;
+}
+$("removed").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-restore]"); if (!b) return;
+  try { await api("/api/shops/restore", { method: "POST", body: JSON.stringify({ store: b.dataset.restore }) }); toast(`Restored ${b.dataset.restore}.`); loadShops(); }
+  catch (err) { toast(err.message, true); }
+});
+$("stores").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-edit]"); if (b) return openDrawer(shops[+b.dataset.edit]);
+  if (e.target.closest("[data-add]")) openDrawer();
+});
+
+// ---------- drawer: add / edit ----------
+let editing = null;   // shop being edited, or null for a new one
+let currentJob = null;
+
+function renderAreas(readSet, writeSet) {
+  $("areas").innerHTML = AREAS.map(([k, label]) => `<tr>
+    <td>${esc(label)}</td>
+    <td class="c"><input type="checkbox" data-read="${k}" aria-label="Read ${esc(label)}" ${readSet.has(k) ? "checked" : ""}></td>
+    <td class="c edit-col"><input type="checkbox" data-write="${k}" aria-label="Edit ${esc(label)}" ${writeSet.has(k) ? "checked" : ""}></td>
+  </tr>`).join("");
+}
+
+function formState() {
+  const access = document.querySelector("input[name=access]:checked").value;
+  const production = document.querySelector("input[name=env]:checked").value === "prod";
+  const reads = [...document.querySelectorAll("[data-read]:checked")].map((i) => i.dataset.read);
+  const writes = access === "read" ? [] : [...document.querySelectorAll("[data-write]:checked")].map((i) => i.dataset.write);
+  const extra = $("f-extra").value.split(",").map((s) => s.trim()).filter(Boolean);
+  const scopes = [...new Set([...reads.map((k) => `read_${k}`), ...writes.map((k) => `write_${k}`), ...extra])];
+  return { store: normStore($("f-domain").value), alias: $("f-alias").value.trim().toLowerCase(), access, production, scopes };
+}
+
+const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+// Sign-in is needed for new or signed-out stores, or when the requested scopes change.
+const needsSignIn = (st) => !editing || !editing.authed || !sameSet(st.scopes, editing.scopes || []);
+
+function refreshForm(e) {
+  // Ticking Edit implies Read; unticking Read clears Edit.
+  if (e?.target?.dataset?.write && e.target.checked) document.querySelector(`[data-read="${e.target.dataset.write}"]`).checked = true;
+  if (e?.target?.dataset?.read && !e.target.checked) document.querySelector(`[data-write="${e.target.dataset.read}"]`).checked = false;
+  const st = formState();
+  document.querySelectorAll(".edit-col").forEach((el) => (el.style.display = st.access === "read" ? "none" : ""));
+  $("areas-help").textContent = st.access === "read" ? "Claude can only read the areas you tick." : "Tick Edit only where Claude should change data.";
+  $("access-warning").innerHTML =
+    st.production && st.access === "delete" ? `<div class="callout danger">Claude could delete data on a live store. Only choose this if you really need it.</div>`
+    : st.production && st.access === "edit" ? `<div class="callout warn">Claude could change data on a live store. Each change still asks you in Claude Code and is logged.</div>`
+    : st.access !== "read" && !document.querySelector("[data-write]:checked") ? `<div class="callout warn">Tick at least one area under Edit below.</div>`
+    : "";
+  $("scope-preview").innerHTML = st.scopes.map((s) => `<span class="chip mono">${esc(s)}</span>`).join("") || `<span class="muted small">none</span>`;
+  const signIn = needsSignIn(st);
+  $("submit").textContent = signIn ? "Sign in with Shopify" : "Save";
+  $("foot-hint").textContent = signIn ? (editing?.authed ? "Data access changed, so Shopify will ask you to approve again." : "Shopify opens in your browser to approve access.") : "";
+}
+
+function openDrawer(shop = null) {
+  editing = shop;
+  $("drawer-title").textContent = shop ? (shop.authed ? `${shop.alias} settings` : `Sign in to ${shop.alias}`) : "Add store";
+  $("f-domain").value = shop?.store || ""; $("f-domain").readOnly = !!shop;
+  $("f-alias").value = shop?.alias || "";
+  document.querySelector(`input[name=env][value=${shop?.production ? "prod" : "dev"}]`).checked = true;
+  document.querySelector(`input[name=access][value=${shop ? accessOf(shop) : "read"}]`).checked = true;
+  const scopes = shop?.scopes || [];
+  const reads = new Set(scopes.length ? scopes.filter((s) => s.startsWith("read_")).map((s) => s.slice(5)) : DEFAULT_READ);
+  const writes = new Set(scopes.filter((s) => s.startsWith("write_")).map((s) => s.slice(6)));
+  renderAreas(reads, writes);
+  const known = new Set(AREAS.flatMap(([k]) => [`read_${k}`, `write_${k}`]));
+  $("f-extra").value = scopes.filter((s) => !known.has(s)).join(", ");
+  $("remove-store").hidden = !shop;
+  showView("form");
+  refreshForm();
+  $("drawer").hidden = false;
+  (shop ? $("f-alias") : $("f-domain")).focus();
+}
+function closeDrawer() {
+  if (currentJob) return toast("Cancel the sign-in first.", true);
+  $("drawer").hidden = true; editing = null;
+}
+function showView(v) {
+  $("form-view").hidden = v !== "form"; $("form-foot").hidden = v !== "form";
+  $("progress-view").hidden = v !== "progress"; $("progress-foot").hidden = v !== "progress";
+}
+
+$("add-store").onclick = () => openDrawer();
+$("drawer-close").onclick = closeDrawer; $("cancel").onclick = closeDrawer;
+$("drawer").addEventListener("mousedown", (e) => { if (e.target === $("drawer")) closeDrawer(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("drawer").hidden && $("modal").hidden) closeDrawer(); });
+$("form-view").addEventListener("change", refreshForm);
+$("form-view").addEventListener("input", (e) => { if (e.target.type === "text") refreshForm(e); });
+$("f-domain").addEventListener("blur", () => {
+  $("f-domain").value = normStore($("f-domain").value);
+  if (!$("f-alias").value) $("f-alias").value = $("f-domain").value.replace(/\.myshopify\.com$/, "");
+  refreshForm();
+});
+
+// Ask before giving Claude more power than it had.
+async function confirmRisk(st) {
+  const rank = { read: 0, edit: 1, delete: 2 };
+  const before = editing ? accessOf(editing) : "read";
+  const becameProd = st.production && !editing?.production;
+  if (st.access === "read" || (rank[st.access] <= rank[before] && !becameProd)) return true;
+  const verbs = st.access === "delete" ? "create, update and delete" : "create and update";
+  if (st.production) {
+    return ask({ title: st.access === "delete" ? "Allow deletes on a production store?" : "Allow changes on a production store?",
+      text: `Claude will be able to ${verbs} data on ${st.store}. Each change still asks you in Claude Code and is logged. Type the domain to confirm.`,
+      ok: "Allow", danger: true, typeToConfirm: st.store });
+  }
+  return ask({ title: st.access === "delete" ? "Allow deletes?" : "Allow changes?",
+    text: st.access === "delete" ? `Claude will be able to delete products, customers, discounts and more on ${st.store}.` : `Claude will be able to create and update data on ${st.store}. Deletes stay blocked.`,
+    ok: "Allow", danger: st.access === "delete" });
+}
+
+const settingsPayload = (st) => ({ store: st.store, alias: st.alias, production: st.production, writable: st.access !== "read", allowDestructive: st.access === "delete" });
+
+$("submit").onclick = async () => {
+  const st = formState();
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(st.store)) return toast("Enter a store domain like my-store.myshopify.com", true);
+  if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(st.alias)) return toast("Short name: lowercase letters, digits, - or _ (max 32).", true);
+  if (!st.scopes.length) return toast("Tick at least one area Claude can read.", true);
+  if (!(await confirmRisk(st))) return;
+  if (!needsSignIn(st)) {
+    try {
+      await api("/api/shops", { method: "PUT", body: JSON.stringify(settingsPayload(st)) });
+      toast(`Saved ${st.alias}.`); $("drawer").hidden = true; editing = null; loadShops();
+    } catch (e) { toast(e.message, true); }
+    return;
+  }
+  runSignIn(st);
+};
+
+function setStep(name, state) {
+  const li = document.querySelector(`#steps li[data-step="${name}"]`);
+  li.className = state; li.querySelector(".step-icon").textContent = state === "done" ? "✓" : state === "fail" ? "!" : "";
+}
+
+async function runSignIn(st) {
+  showView("progress");
+  $("drawer-title").textContent = `Signing in to ${st.alias}`;
+  document.querySelectorAll("#steps li").forEach((li) => { li.className = ""; li.querySelector(".step-icon").textContent = ""; });
+  $("log").textContent = ""; $("progress-msg").innerHTML = ""; $("progress-link").innerHTML = "";
+  $("stop-signin").hidden = false; $("progress-done").hidden = true;
+  const finish = () => { currentJob = null; $("stop-signin").hidden = true; $("progress-done").hidden = false; $("progress-done").focus(); };
+  setStep("start", "active");
+  try {
+    const { id } = await api("/api/auth", { method: "POST", body: JSON.stringify({ store: st.store, scopes: st.scopes }) });
+    currentJob = id;
+    setStep("start", "done"); setStep("browser", "active");
+    const es = new EventSource(`/api/auth/${id}/events?t=${TOKEN}`);
+    es.onmessage = async (m) => {
+      const evt = JSON.parse(m.data);
+      if (evt.type === "line") {
+        $("log").textContent += evt.data + "\n";
+        const url = evt.data.match(/https?:\/\/[^\s"'<>]+/);
+        if (url && !$("progress-link").innerHTML) $("progress-link").innerHTML = `<p class="small muted">No tab opened? <a href="${esc(url[0])}" target="_blank" rel="noopener">Open the Shopify sign-in page</a></p>`;
+      }
+      if (evt.type !== "done") return;
+      es.close();
+      if (evt.data.code === 0) {
+        setStep("browser", "done"); setStep("save", "active");
+        try {
+          await api("/api/shops", { method: "PUT", body: JSON.stringify(settingsPayload(st)) });
+          setStep("save", "done");
+          $("progress-msg").innerHTML = `<div class="callout ok">${esc(st.alias)} is ready. Ask Claude to use “${esc(st.alias)}”.</div>`;
+          loadShops();
+        } catch (e) { setStep("save", "fail"); $("progress-msg").innerHTML = `<div class="callout danger">${esc(e.message)}</div>`; }
+      } else {
+        setStep("browser", "fail");
+        $("progress-msg").innerHTML = `<div class="callout danger">Sign-in didn't finish, so nothing was saved. Open Details for the Shopify CLI output.</div>`;
+      }
+      finish();
+    };
+  } catch (e) {
+    setStep("start", "fail");
+    $("progress-msg").innerHTML = `<div class="callout danger">${esc(e.message)}</div>`;
+    finish();
+  }
+}
+$("stop-signin").onclick = async () => { if (currentJob) await api(`/api/auth/${currentJob}/cancel`, { method: "POST" }).catch(() => {}); };
+$("progress-done").onclick = () => { $("drawer").hidden = true; editing = null; };
+
+$("remove-store").onclick = async () => {
+  const s = editing;
+  const ok = await ask({ title: `Remove ${s.alias}?`, text: `Claude won't be able to use ${s.store} through shophop, and its settings are cleared. You can restore it later or sign in again to add it back.`, ok: "Remove", danger: true });
+  if (!ok) return;
+  try { await api(`/api/shops?store=${encodeURIComponent(s.store)}`, { method: "DELETE" }); toast(`Removed ${s.alias}.`); $("drawer").hidden = true; editing = null; loadShops(); }
+  catch (e) { toast(e.message, true); }
+};
+
+// ---------- approvals ----------
+async function loadApprovals() {
+  const { approvals } = await api("/api/approvals");
+  const pending = approvals.filter((a) => a.state === "pending");
+  const recent = approvals.filter((a) => a.state !== "pending" && Date.now() - Date.parse(a.decidedAt || a.requestedAt) < 86400e3);
+  $("approvals-section").hidden = !pending.length && !recent.length;
+  // Don't wipe what the user is typing during the 10-second refresh.
+  const typing = document.activeElement?.id?.startsWith("ap-") ? { id: document.activeElement.id, v: document.activeElement.value } : null;
+  $("approvals").innerHTML = [...pending, ...recent].map((a) => {
+    const s = a.summary || {};
+    const facts = s.companies ? [
+      `${s.companies.create} companies to create`, s.companies.skip ? `${s.companies.skip} skipped` : "",
+      `${s.locations} locations`, `${(s.contacts?.assignExisting || 0) + (s.contacts?.createNew || 0)} contacts`,
+    ].filter(Boolean) : [];
+    const status = { approved: `Approved · valid until ${new Date(a.expiresAt).toLocaleString()}`, rejected: "Rejected", expired: "Approval expired" }[a.state];
+    return `<div class="approval${a.state === "pending" ? "" : " decided"}">
+      <h3>Copy ${esc(a.kind)} from ${esc(a.from)}${a.fromProduction ? " (production)" : " (development)"} into <span style="color:var(--danger)">${esc(a.to)} (production)</span></h3>
+      <div class="facts">${facts.map((f) => `<span>${esc(f)}</span>`).join("")}<span>requested ${esc(ago(a.requestedAt))}</span><span class="mono">#${esc(a.id)}</span></div>
+      ${s.warnings?.length && a.state === "pending" ? `<ul class="warns">${s.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+      ${a.state === "pending" ? `<div class="row">
+        <input type="text" id="ap-${esc(a.id)}" placeholder="Type ${esc(a.toStore)} to approve" autocomplete="off" spellcheck="false" aria-label="Type the store domain to approve">
+        <button class="btn primary" data-ap="approve" data-id="${esc(a.id)}">Approve</button>
+        <button class="btn" data-ap="reject" data-id="${esc(a.id)}">Reject</button>
+      </div>` : `<div class="small muted">${esc(status)}</div>`}
+    </div>`;
+  }).join("");
+  if (typing && $(typing.id)) { $(typing.id).value = typing.v; $(typing.id).focus(); }
+}
+$("approvals").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-ap]"); if (!b) return;
+  const { id, ap } = b.dataset;
+  try {
+    await api("/api/approvals", { method: "POST", body: JSON.stringify({ id, action: ap, confirm: ap === "approve" ? $(`ap-${id}`).value : undefined }) });
+    toast(ap === "approve" ? "Approved. Ask Claude to run the copy again." : "Rejected.");
+    loadApprovals();
+  } catch (err) { toast(err.message, true); }
+});
+$("approvals").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id?.startsWith("ap-")) e.target.parentElement.querySelector('[data-ap="approve"]').click(); });
+
+// ---------- activity ----------
+const OUTCOME = { sent: "applied", userErrors: "rejected by Shopify", failed: "failed", refused: "blocked" };
+const SOURCE = { claude: "Claude", "shop-manager": "Shop Manager", cli: "terminal", "copy-companies": "company copy" };
+async function loadActivity() {
+  const { auditFile, entries } = await api("/api/audit?limit=200");
+  $("auditfile").textContent = auditFile;
+  const fs = $("f-shop").value, fo = $("f-outcome").value;
+  const rows = entries.filter((e) => (!fs || e.shop === fs) && (!fo || e.outcome === fo));
+  $("activity").innerHTML = rows.length ? rows.slice(0, 100).map((e) => {
+    const detail = e.userErrors ? e.userErrors.map((u) => u.message).join("; ") : e.error || "";
+    return `<details class="act">
+      <summary><span class="dot ${esc(e.outcome)}" title="${esc(OUTCOME[e.outcome] || e.outcome)}"></span>
+        <span class="what"><b>${esc(e.fields.join(", ") || "mutation")}</b> on <b>${esc(e.shop)}</b>${e.production ? ' <span class="pill prod" style="padding:0 6px">prod</span>' : ""} · ${esc(OUTCOME[e.outcome] || e.outcome)} <span class="muted">by ${esc(SOURCE[e.source] || "Claude")}</span></span>
+        <span class="when" title="${esc(new Date(e.ts).toLocaleString())}">${esc(ago(e.ts))}</span></summary>
+      <div class="body">
+        ${detail ? `<p class="err">${esc(detail)}</p>` : ""}
+        <p class="small muted" style="margin:0 0 8px">${esc(e.store)}${e.user ? ` · ${esc(e.user)}` : ""} · ${esc(new Date(e.ts).toLocaleString())}</p>
+        <pre class="code">${esc(e.mutation)}${e.variables ? `\n\nvariables: ${esc(e.variables)}` : ""}${e.result ? `\n\nresult: ${esc(e.result)}` : ""}</pre>
+      </div></details>`;
+  }).join("") : `<div class="empty" style="border:0">${entries.length ? "Nothing matches these filters." : "No changes yet. Everything Claude changes, or tries to, shows up here."}</div>`;
+}
+$("f-shop").onchange = loadActivity; $("f-outcome").onchange = loadActivity; $("refresh-activity").onclick = loadActivity;
+
+// ---------- boot ----------
+loadShops().catch((e) => { $("stores").innerHTML = `<div class="empty">${esc(e.message)}</div>`; });
+loadApprovals().catch(() => {});
+loadActivity().catch((e) => { $("activity").innerHTML = `<div class="empty" style="border:0">${esc(e.message)}</div>`; });
+setInterval(() => { if (document.visibilityState === "visible") loadApprovals().catch(() => {}); }, 10000);
+</script>
+</body>
+</html>
