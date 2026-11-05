@@ -145,3 +145,77 @@ It runs fully on your computer, which is also why **claude.ai on the web and mob
 | Where the Shopify CLI was found | `~/Library/Caches/shophop/` (macOS), `%LOCALAPPDATA%\shophop\Cache\` (Windows), `~/.cache/shophop/` (Linux) |
 
 Nothing is sent anywhere except to Shopify, by the Shopify CLI.
+
+## The protection rules
+
+`shophop setup protect` merges two kinds of rules into `~/.claude/settings.json`:
+
+- **`permissions.deny`** blocks Claude's file tools (Read, Edit, Write) for shophop's settings folder and the Shopify CLI's token file, in every mode.
+- **`autoMode.hard_deny`** covers what file rules can't, such as shell commands (`mv`, `sed`, `curl` …) and the Shop Manager's local API. It applies in auto mode; in the default mode, Claude Code already asks before every shell command.
+
+It never adds duplicates, backs the file up to `settings.json.bak` the first time, and uses the right token-file location for each platform.
+
+<details>
+<summary>Adding the rules by hand</summary>
+
+Merge this into `~/.claude/settings.json` (macOS paths shown; `shophop setup protect` fills in the right ones on Windows and Linux). If the file already has `permissions.deny` or `autoMode.hard_deny`, add these entries to the existing lists, and keep `"$defaults"` first in `hard_deny` so Claude Code's built-in rules still apply.
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Edit(~/.config/shophop/**)",
+      "Read(~/Library/Preferences/shopify-cli-store-nodejs/**)",
+      "Edit(~/Library/Preferences/shopify-cli-store-nodejs/**)"
+    ]
+  },
+  "autoMode": {
+    "hard_deny": [
+      "$defaults",
+      "Creating, modifying, moving or deleting anything under ~/.config/shophop/ (the shophop store config, audit log and production-copy approvals) by any means, including shell commands, scripts or other programs. Only the user changes these, through the Shop Manager UI.",
+      "Calling the shophop Shop Manager's local HTTP API (127.0.0.1 /api/approvals, /api/shops, /api/auth) with curl, fetch, a browser automation tool or any other client, e.g. to approve a copy into a production store or change a store's writable, destructive or production settings. Only the user does this, by hand in their own browser."
+    ]
+  }
+}
+```
+
+</details>
+
+Claude Desktop has no shell or file tools of its own, so it doesn't need these rules, and it asks you before every shophop tool call. If you've installed another extension that can edit files or run commands, don't give it access to `~/.config/shophop/`.
+
+## Opening the Shop Manager
+
+- `shophop ui` in a terminal (`--no-open` to only print the URL, `--port N` to choose the port)
+- asking Claude to "open the shop manager"
+- the slash command in Claude Code: `/mcp__plugin_shophop_shophop__shops` with the plugin, `/mcp__shophop__shops` with the plain MCP server
+
+It listens on 127.0.0.1 only, with a random token in the URL.
+
+## Claude Desktop troubleshooting
+
+- **The extension's settings** are all optional. Fill in **Shopify CLI path** only if shophop says it can't find the CLI; paste the output of `which shopify` (macOS) or `where shopify` (Windows).
+- **`shophop setup desktop`** takes `--data-dir DIR` for where exports go (default `~/shophop-data`) and `--remove`. It keeps your other settings and saves a backup the first time.
+- **Use the extension or `setup desktop`, not both**, or Claude Desktop loads shophop twice. The same goes for the plugin and the plain MCP server in Claude Code.
+- **It doesn't start?** Check the log: `~/Library/Logs/Claude/mcp-server-shophop.log` on macOS, `%APPDATA%\Claude\logs\mcp-server-shophop.log` on Windows.
+
+## All settings
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SHOPHOP_API_VERSION` | latest stable | Pin the Admin API version, e.g. `2026-10`. Saves about 0.5 s per call |
+| `SHOPHOP_DATA_DIR` | `./shopify-data` in the Claude Code project; `~/shophop-data` for Claude Desktop | Where exports, plans and ID maps go |
+| `SHOPHOP_INLINE_LIMIT` | `15000` | Results longer than this (characters) are written to a file instead |
+| `SHOPHOP_CONFIG` | `~/.config/shophop/shops.json` | Config file |
+| `SHOPHOP_AUDIT` | next to the config | Audit log |
+| `SHOPHOP_AUDIT_KEEP_MONTHS` | `12` | Monthly audit archives to keep |
+| `SHOPHOP_APPROVALS` | next to the config | Production-copy approvals |
+| `SHOPHOP_UI_PORT` | any free port | Port for the Shop Manager |
+| `SHOPIFY_BIN` | `shopify` | Path to the Shopify CLI |
+
+`shophop copy-companies` also takes `--only "A,B"` to copy just some companies and `--batch N`.
+
+## Speed
+
+Each call starts the Shopify CLI, which takes about 2 s on its own. A repeat `shop_query` takes about 3 s, because the list of signed-in stores is cached for 30 s. Pinning `SHOPHOP_API_VERSION` saves another ~0.5 s. `npm run bench -- <shop>` times a read-only query on a real store.
+
+shophop is tested against Shopify CLI 4.9.x, and `list_shops` warns when the installed version is different.
