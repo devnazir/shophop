@@ -17,7 +17,7 @@ The claude.ai Shopify connector has one active shop per account, shared by every
 
 ## Install
 
-Requires Node 20+ and Shopify CLI 4.9 or later (`shopify version`).
+Requires Node 20+ and the [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) 4.9 or later (`npm install -g @shopify/cli`, check with `shopify version`).
 
 **Platforms:**
 
@@ -27,8 +27,6 @@ Requires Node 20+ and Shopify CLI 4.9 or later (`shopify version`).
 | **Windows** | ✅ | ✅ |
 | **Linux** | ✅ | (no Claude Desktop for Linux) |
 
-On Windows, install the Shopify CLI with `npm install -g @shopify/cli` and run commands like `shophop ui` in PowerShell or Command Prompt.
-
 **As a Claude Code plugin** (MCP server, `/mcp__plugin_shophop_shophop__shops` slash command and a skill):
 
 ```sh
@@ -36,21 +34,23 @@ claude plugin marketplace add devnazir/shophop
 claude plugin install shophop@shophop
 ```
 
-**Or as a plain MCP server:**
+**Or as a plain MCP server**, using the terminal command below:
 
 ```sh
-git clone https://github.com/devnazir/shophop.git && cd shophop
-npm install
-claude mcp add --scope user shophop -- node /path/to/shophop/bin/shophop.js
+claude mcp add --scope user shophop -- shophop
 ```
+
+On Windows, use `claude mcp add --scope user shophop -- cmd /c shophop` instead (npm installs the command as `shophop.cmd`).
 
 Use one or the other, not both, or Claude Code will load the server twice.
 
-**Terminal command** (optional, gives `shophop` on your PATH):
+**Terminal command** (`shophop ui`, `shophop list`, … on macOS, Windows and Linux):
 
 ```sh
-npm link
+npm install -g https://github.com/devnazir/shophop/archive/refs/heads/main.tar.gz
 ```
+
+Run the same command again to update. To pin a release instead, use its tag, e.g. `…/archive/refs/tags/v0.5.1.tar.gz`. Uninstall with `npm uninstall -g shophop`.
 
 ### Claude Desktop (macOS and Windows)
 
@@ -58,7 +58,7 @@ Claude Desktop runs shophop on your computer, so it uses the same Shopify sign-i
 
 Pick **one** of these two ways. Using both makes Claude Desktop load shophop twice.
 
-**Option 1: install the extension (easiest, no cloning)**
+**Option 1: install the extension (easiest)**
 
 1. Download `shophop.mcpb` from the repo's [Releases](https://github.com/devnazir/shophop/releases).
 2. Double-click it, or drag it into Claude Desktop → **Settings → Extensions**, and click **Install**.
@@ -66,12 +66,12 @@ Pick **one** of these two ways. Using both makes Claude Desktop load shophop twi
 
 Claude Desktop runs the extension with its own built-in Node, so there are no paths to set up.
 
-**Option 2: run it from a clone (follows your local code)**
+**Option 2: use the terminal command**
+
+After installing the [terminal command](#install):
 
 ```sh
-git clone https://github.com/devnazir/shophop.git && cd shophop
-npm install
-node bin/shophop.js setup desktop          # or `shophop setup desktop` after `npm link`
+shophop setup desktop
 ```
 
 This adds shophop to Claude Desktop's config with the right paths, keeping your other settings, and saves a backup next to it the first time. Options: `--data-dir DIR` for where exports go (default `~/shophop-data`), and `--remove` to take it out again.
@@ -161,7 +161,7 @@ Progress is saved to `shopify-data/<target>/idmap-companies-from-<source>.json` 
 **Stop Claude from opening these gates itself (Claude Code).** Claude Code has file and shell tools, so run this once:
 
 ```sh
-shophop setup protect        # or: node bin/shophop.js setup protect
+shophop setup protect
 ```
 
 It adds rules to `~/.claude/settings.json` that stop Claude from changing your shophop settings, approving its own copies, or reading your Shopify tokens. Then restart Claude Code.
@@ -239,6 +239,9 @@ Each call starts the Shopify CLI, which takes about 2 s on its own. A repeat `sh
 ## Development
 
 ```sh
+git clone https://github.com/devnazir/shophop.git && cd shophop
+npm install
+npm link        # your `shophop` command now runs this checkout
 npm test        # tests against a stand-in Shopify CLI; never contacts Shopify (CI runs them on macOS, Windows and Linux)
 npm run build   # bundles dist/shophop.js for the plugin (rebuild after changing src/)
 npm run pack:desktop   # builds release/shophop.mcpb, the Claude Desktop extension (upload it to a GitHub release)
