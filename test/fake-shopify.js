@@ -18,7 +18,9 @@ const store = flag("-s");
 const query = flag("--query-file") ? readFileSync(flag("--query-file"), "utf8") : flag("-q") || "";
 const vars = flag("--variable-file") ? JSON.parse(readFileSync(flag("--variable-file"), "utf8")) : flag("--variables") ? JSON.parse(flag("--variables")) : {};
 if (flag("--variables")) appendFileSync(`${STATE}.calls`, JSON.stringify({ warning: "variables passed on the command line" }) + "\n");
-appendFileSync(`${STATE}.calls`, JSON.stringify({ cmd: args.slice(0, 3).join(" "), store, mutation: args.includes("--allow-mutations"), op: (query.match(/\b(\w+)\s*\(/) || [])[1] }) + "\n");
+const t0 = Date.now();
+if (state.delayMs) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, state.delayMs); // simulate a slow CLI
+appendFileSync(`${STATE}.calls`, JSON.stringify({ cmd: args.slice(0, 3).join(" "), store, mutation: args.includes("--allow-mutations"), op: (query.match(/\b(\w+)\s*\(/) || [])[1], t0, t1: Date.now() }) + "\n");
 
 if (args[0] === "version") { process.stdout.write(`${state.version || "4.9.4"}\n`); process.exit(0); }
 if (args.join(" ").startsWith("store auth list")) out({ sessions: state.sessions || [] });

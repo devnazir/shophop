@@ -1,6 +1,6 @@
 {
   "name": "shophop",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Work with several Shopify stores at once from Claude Code: per-call store selection, read-only by default, audit log, bulk exports, B2B company copy with production approvals. Uses the Shopify CLI's staff sign-in, no custom app.",
   "author": {
     "name": "devnazir"

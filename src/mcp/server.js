@@ -23,7 +23,7 @@ For any other store task (e.g. "create a metaobject in store A"):
 7. Missing store or scope: call open_shop_manager so the user can sign in or add scopes.`;
 
 export function createServer() {
-  const server = new McpServer({ name: "shophop", version: "0.5.0" }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "shophop", version: "0.5.1" }, { instructions: INSTRUCTIONS });
   registerStoreTools(server);
   registerReadTools(server);
   registerWriteTools(server);

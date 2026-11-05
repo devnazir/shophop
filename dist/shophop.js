@@ -255,7 +255,21 @@ import { execFile as execFile2 } from "node:child_process";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join as join3 } from "node:path";
-function run(cliArgs, { timeoutMs = 12e4 } = {}) {
+function run(cliArgs, opts) {
+  const i = cliArgs.indexOf("-s");
+  const store = i >= 0 ? cliArgs[i + 1] : null;
+  if (!store) return runNow(cliArgs, opts);
+  const previous = storeQueues.get(store) || Promise.resolve();
+  const current = previous.then(() => runNow(cliArgs, opts));
+  const tail = current.catch(() => {
+  });
+  storeQueues.set(store, tail);
+  tail.then(() => {
+    if (storeQueues.get(store) === tail) storeQueues.delete(store);
+  });
+  return current;
+}
+function runNow(cliArgs, { timeoutMs = 12e4 } = {}) {
   const [file2, args2] = shopifyCommand(cliArgs);
   return new Promise((resolve4) => {
     execFile2(
@@ -360,11 +374,12 @@ async function cliVersion() {
 function authCommand(store, scopes) {
   return `shopify store auth -s ${store} --scopes ${scopes || "<comma-separated scopes>"}`;
 }
-var versionCache;
+var storeQueues, versionCache;
 var init_cli = __esm({
   "src/shopify/cli.js"() {
     init_settings();
     init_env();
+    storeQueues = /* @__PURE__ */ new Map();
   }
 });
 
@@ -40115,7 +40130,7 @@ __export(server_exports2, {
   startMcpServer: () => startMcpServer
 });
 function createServer2() {
-  const server = new McpServer({ name: "shophop", version: "0.5.0" }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "shophop", version: "0.5.1" }, { instructions: INSTRUCTIONS });
   registerStoreTools(server);
   registerReadTools(server);
   registerWriteTools(server);

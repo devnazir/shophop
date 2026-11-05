@@ -10,7 +10,24 @@ import { join } from "node:path";
 import { API_VERSION as DEFAULT_VERSION, TESTED_CLI } from "../settings.js";
 import { shopifyCommand } from "./env.js";
 
-function run(cliArgs, { timeoutMs = 120_000 } = {}) {
+// One queue per store: commands for the same store run one at a time, different stores still run in parallel.
+// When a store's token is close to expiring, every `shopify store …` command for it tries to refresh it, with
+// no lock, and a failed refresh deletes that store's stored sign-in. Never running two at once for the same
+// store avoids that race. (Commands without a store, like `store auth list`, aren't queued.)
+const storeQueues = new Map();
+function run(cliArgs, opts) {
+  const i = cliArgs.indexOf("-s");
+  const store = i >= 0 ? cliArgs[i + 1] : null;
+  if (!store) return runNow(cliArgs, opts);
+  const previous = storeQueues.get(store) || Promise.resolve();
+  const current = previous.then(() => runNow(cliArgs, opts));
+  const tail = current.catch(() => {});
+  storeQueues.set(store, tail);
+  tail.then(() => { if (storeQueues.get(store) === tail) storeQueues.delete(store); });
+  return current;
+}
+
+function runNow(cliArgs, { timeoutMs = 120_000 } = {}) {
   const [file, args] = shopifyCommand(cliArgs);
   return new Promise((resolve) => {
     execFile(
