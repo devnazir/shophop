@@ -2,7 +2,7 @@
 
 **Safe multi-store Shopify for Claude Code.**
 
-<!-- Demo video: drag shophop-demo.mp4 here in GitHub's editor -->
+https://github.com/user-attachments/assets/6c57bb26-f5f4-43d0-9b4e-cf476627fdb7
 
 Work with several Shopify stores at the same time from Claude Code.
 
